@@ -5,6 +5,8 @@ import { XRButton } from "three/addons/webxr/XRButton.js";
 
 import { IntegralCirculantGraph } from "./CirculantGraph.js";
 
+import { createDebugWindow } from "https://code4fukui.github.io/xrutil/createDebugWindow.js";
+
 let scene, camera, renderer, container;
 let controller1, controller2;
 
@@ -14,8 +16,11 @@ const intersected = [];
 const tempMatrix = new THREE.Matrix4();
 
 let group;
+const vertices = [];
 
 let graph;
+
+let debugw;
 
 init();
 animate();
@@ -25,7 +30,7 @@ function initGraph() {
   const vertexSize = 0.01;
   const edgeThickness = vertexSize / 4;
 
-  graph = new IntegralCirculantGraph(12, [1,2,3]);
+  graph = new IntegralCirculantGraph(12, [1, 2, 3]);
 
   // 頂点
   graph.vertices = new Array(graph.order);
@@ -85,6 +90,7 @@ function init() {
 
   for (let i = 0; i < graph.order; i++) {
     group.add(graph.vertices[i]);
+    vertices.push(graph.vertices[i]);
   }
 
   for (let i = 0; i < graph.size; i++) {
@@ -114,7 +120,7 @@ function init() {
   scene.add(controller2);
 
   // コントローラーから出る線
-
+  /*
   const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, - 1)]);
 
   const line = new THREE.Line(geometry);
@@ -125,8 +131,11 @@ function init() {
   controller2.add(line.clone());
 
   raycaster = new THREE.Raycaster();
+  */
 
-  //
+  // debug
+  debugw = createDebugWindow(0, 0, -2);
+  //scene.add(debugw);
 
   window.addEventListener("resize", onWindowResize);
 
@@ -147,16 +156,34 @@ function onWindowResize() {
 
 }
 
-function onSelectStart(event) {
 
+function getClosed(p, objs, distance) {
+  let mindistance = distance;
+  let min = null;
+  for (const o of objs) {
+    const d = p.distanceTo(o.position);
+    if (d < mindistance) {
+      mindistance = d;
+      min = o;
+    }
+  }
+  return min;
+}
+
+function onSelectStart(event) {
+  debugw.log("select");
+  
   const controller = event.target;
 
-  const intersections = getIntersections(controller);
-  const intersection = intersections.find(item => item.object.name === "vertex");
+  //const intersections = getIntersections(controller);
+  //const intersection = intersections.find(item => item.object.name === "vertex");
+  const intersection = getClosed(controller.position, vertices, .10);
+  debugw.log(intersection)
 
   if (intersection) {
 
-    const object = intersection.object;
+    //const object = intersection.object;
+    const object = intersection;
     controller.attach(object);
 
     controller.userData.selected = object;
@@ -235,8 +262,8 @@ function render() {
 
   cleanIntersected();
 
-  intersectObjects(controller1);
-  intersectObjects(controller2);
+  //intersectObjects(controller1);
+  //intersectObjects(controller2);
 
   renderer.render(scene, camera);
 
@@ -276,3 +303,5 @@ function updateEdges() {
   }
 
 }
+
+  console.log("a")
